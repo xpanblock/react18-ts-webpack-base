@@ -5,10 +5,24 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "webpack serve --config webpack/webpack.config.js --open",
+    "start": "webpack serve --config webpack/webpack.config.js --env env=dev",
+    "build": "webpack --config webpack/webpack.config.js --env env=prod",
     "lint": "eslint src/**/*.tsx src/**/*.ts",
     "lint-fix": "eslint src/**/*.tsx src/**/*.ts --fix",
     "format": "prettier --write ."
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+  "lint-staged": {
+    "src/**/*.{js,jsx,ts,tsx,json}": [
+      "eslint --fix"
+    ],
+    "src/**/*.{js,jsx,ts,tsx,json,css,scss,md}": [
+      "prettier --write"
+    ]
   },
   "author": "",
   "license": "ISC",
@@ -22,6 +36,7 @@
     "@babel/preset-env": "^7.19.3",
     "@babel/preset-react": "^7.18.6",
     "@babel/preset-typescript": "^7.18.6",
+    "@pmmmwh/react-refresh-webpack-plugin": "^0.5.8",
     "@types/react": "^18.0.21",
     "@types/react-dom": "^18.0.6",
     "@typescript-eslint/eslint-plugin": "^5.39.0",
@@ -33,12 +48,17 @@
     "eslint-plugin-n": "^15.3.0",
     "eslint-plugin-promise": "^6.0.1",
     "eslint-plugin-react": "^7.31.8",
+    "eslint-plugin-react-hooks": "^4.6.0",
     "html-webpack-plugin": "^5.5.0",
+    "husky": "^4.3.8",
+    "lint-staged": "^13.0.3",
     "prettier": "2.7.1",
+    "react-refresh": "^0.14.0",
     "style-loader": "^3.3.1",
     "typescript": "^4.8.4",
     "webpack": "^5.74.0",
     "webpack-cli": "^4.10.0",
-    "webpack-dev-server": "^4.11.1"
+    "webpack-dev-server": "^4.11.1",
+    "webpack-merge": "^5.8.0"
   }
 }

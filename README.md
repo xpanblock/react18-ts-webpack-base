@@ -158,6 +158,18 @@ Note: Go to the TypeScript website for more information on configuration options
                         },
                     ],
                 },
+                {
+                    test: /\.css$/,
+                    use: ['style-loader', 'css-loader'],
+                },
+                {
+                    test: /\.(?:ico|gif|png|jpg|jpeg)$/i,
+                    type: 'asset/resource',
+                },
+                {
+                    test: /\.(woff(2)?|eot|ttf|otf|svg|)$/,
+                    type: 'asset/inline',
+                },
             ],
         },
         output: {
@@ -170,7 +182,6 @@ Note: Go to the TypeScript website for more information on configuration options
             }),
         ],
         stats: 'errors-only',
-        mode: 'development', // required for development mode
     }
 ```
 
@@ -281,7 +292,7 @@ Note: The compilation errors should be fixed and you should see the PNG and the 
 
 This completes the first part of this tutorial.
 
-## Part II: Streamlining development with ESLint and Prettier
+## Part II: Code styling and formatting with ESLint and Prettier
 
 1. Install ESLint as a dev dependency:
    ```npm install -D eslint```
@@ -420,36 +431,17 @@ Note: There will be errors for the number of spaces per tab because ESLint is co
 ``` npm run lint ```
 Note: There should be no errors.
 
+## Part III: Configure Webpack for development and production environments
 
-Floating notes below....
-
-24.             {
-                    test: /\.css$/,
-                    use: ['style-loader', 'css-loader'], // need to install style-loader and css-loader for .css files to work
-                },
-                {
-                    test: /\.(?:ico|gif|png|jpg|jpeg)$/i,
-                    type: 'asset/resource',
-                },
-                {
-                    test: /\.(woff(2)?|eot|ttf|otf|svg|)$/,
-                    type: 'asset/inline',
-                },
-
-In the webpack.config.js file, you will notice other rules that have been defined for compiling with CSS, images and vector-based graphics.
-
-21. [CSS and style loader instructions here]:
-    ```npm install -D css-loader style-loader```
-
-22. Webpack configuration can be handled using a single file (webpack.config.js) for working in a development environment. However, for production there are some variations. Taking this into account, you will be breaking out the configuration into multiple files to handle development environment and production environment scenarios. In this case, you can create a webpack.config.js that will combine the contents of a common configuration file with the contents of development configuration file OR a production configuration file depending on which environment the application is in. Create the files in a webpack directory at the root of the application:
-    ```mkdir webpack```
+1. Previously, you configured Webpack using a single file (webpack.config.js) for working in a development environment. Now, it's time to create configuration files for development and production. The reason for having separate configurations? In development, you are using Webpack server to see changes in the application as you write code and save. It's faster to develop, but the bundle size is larger than you would want for deploying to production. In production, you compile and build a much smaller bundle. You can still run the application locally, but don't have the ability to do hot loading like you can with Webpack server.
+The first thing you need to do is to change the name of your existing webpack.config.js file to webpack.common.js. Then, create the remaining files you will need:
+    ```mv webpack/webpack.config.js webpack/webpack.common.js```
     ```touch webpack/webpack.config.js```
-    ```touch webpack/webpack.common.js```
     ```touch webpack/webpack.dev.js```
     ```touch webpack/webpack.prod.js```
 
-23. Add the configuration code to the respective files:
-    webpack.config.js
+2. Add the configuration code to the respective files:
+    webpack.config.js  -- this code merges the common configuration with the dev or prod configuration, depending on environment
 
 ```
     const { merge } = require('webpack-merge')
@@ -463,55 +455,6 @@ In the webpack.config.js file, you will notice other rules that have been define
     }
 ```
 
-webpack.common.js
-
-```
-    const path = require('path')
-    const HtmlWebpackPlugin = require('html-webpack-plugin')
-
-    module.exports = {
-    entry: path.resolve(__dirname, '..', './src/index.tsx'), // sets the entry point for the app
-    resolve: {
-        extensions: ['.tsx', '.ts', '.js'], // resolves files of these types so the suffix doesn't need to be included when importing into other files/components -- starts with .tsx and works to the right
-    },
-    module: {
-        rules: [
-            {
-                test: /\.(ts|js)x?$/, // uses babel-loader when compiling .tsx, .ts, .jsx, .js files, and excludes everything in the installed third-party libraries (node_modules)
-                exclude: /node_modules/,
-                use: [
-                    {
-                        loader: 'babel-loader',
-                    },
-                ],
-            },
-            {
-                test: /\.css$/,
-                use: ['style-loader', 'css-loader'],
-            },
-            {
-                test: /\.(?:ico|gif|png|jpg|jpeg)$/i,
-                type: 'asset/resource',
-            },
-            {
-                test: /\.(woff(2)?|eot|ttf|otf|svg|)$/,
-                type: 'asset/inline',
-            },
-        ],
-    },
-    output: {
-        path: path.resolve(__dirname, '..', './dist'), // outputs the build file as bundle.js to the dist directory
-        filename: 'bundle.js',
-    },
-    plugins: [
-        new HtmlWebpackPlugin({
-            template: path.resolve(__dirname, '..', './src/index.html'),
-        }),
-    ],
-    stats: 'errors-only',
-    }
-```
-
 webpack.dev.js
 
 ```
@@ -519,19 +462,114 @@ const webpack = require('webpack')
 const ReactRefreshWebpackPlugin = require('@pmmmwh/react-refresh-webpack-plugin')
 
 module.exports = {
-  mode: 'development',
-  devtool: 'cheap-module-source-map',
-  devServer: {
+  mode: 'development',  // sets the development mode -- the variable can be accessed in code with {process.env.NODE_ENV} 
+  devtool: 'cheap-module-source-map',  // the sourcemap tool used by CRA -- sourcemap creates a way to connect errors compiled in ES5 code the browser reads with the ES6/JSX code that you write in your components, useful for debugging
+  devServer: {  // hot loading webpack server during development
     hot: true,
     open: true,
   },
   plugins: [
     new ReactRefreshWebpackPlugin(),
-    new webpack.DefinePlugin({
-      'process.env.name': JSON.stringify('Vishwas'),
+    new webpack.DefinePlugin({  // this is an optional setting of an environment variable
+      'process.env.name': JSON.stringify('__DEV__'), 
     }),
   ],
 }
 ```
 
-@babel/plugin-transform-runtime
+webpack.prod.js
+
+```
+const webpack = require('webpack')
+
+module.exports = {
+  mode: 'production',
+  devtool: 'source-map',
+  plugins: [
+    new webpack.DefinePlugin({  // this is an optional setting of an environment variable
+      'process.env.name': JSON.stringify('__PROD__'),
+    }),
+  ],
+}
+```
+
+3. Install the libraries for React refresh, these will make Webpack server update the application in development when a file is saved and also retain the data state of the application:
+``` npm install -D @pmmmwh/react-refresh-webpack-plugin react-refresh ```
+
+4. In the package.json scripts section, set start and build scripts as shown below. Notice you are setting the enviroment variables for dev and prod that will determine which webpack configuration file is merged with the common file:
+```
+    "start": "webpack serve --config webpack/webpack.config.js --env env=dev",
+    "build": "webpack --config webpack/webpack.config.js --env env=prod",
+```
+The --open flag was also removed from the start script because the open browser command is now handled in the devServer section of the webpack.dev.js file.
+
+5. Add some code to the App.tsx to see what the environment variables contain. Put the following code in the h1 tags next to the title:
+```
+{process.env.NODE_ENV} - {process.env.name}
+```
+
+6. Run the dev enviroment and do a production build in separate terminals to see the resulting env variable:
+``` npm run start ```
+``` npm run build ```
+You should see 'React TypeScript Webpack Base App development - __DEV__' in the dev enviroment and 'React TypeScript Webpack Base App production - __PROD__' in the production build. You could use environment variables to connect to different endpoints depending on what is required for development or production.
+
+## Part IV: Force linting and formatting rules on commits
+
+Forcing linting and formatting rules prior to making git commits is a handy thing to do when working in teams on the same code base. This can prevent unneeded changes to files when code is pushed and run through the peer review process. For this, you can use a couple libraries, husky and lint-staged.
+
+1. Add husky version 4 and lint-staged libraries as dev-dependencies:
+``` npm i -D husky@4 lint-staged ```
+
+2. Add configuration for husky and lint-staged to the package.json file:
+```
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+  "lint-staged": {
+    "src/**/*.{js,jsx,ts,tsx,json}": [
+      "eslint --fix"
+    ],
+    "src/**/*.{js,jsx,ts,tsx,json,css,scss,md}": [
+      "prettier --write"
+    ]
+  }
+```
+
+3. To test this configuration, you can add an unused variable to the App.tsx file before the return statement and try a git save and commit:
+```
+let myVar
+```
+
+``` git save . ```
+``` git commit -m 'some commit message' ```
+
+Lint-staged will catch the unused variable and fail the commit.
+
+4. Change the App.tsx code to use the variable, but try defining the variable as a string with double-quotes and add a semicolon to the end:
+
+```
+ let myVar = "Foobar";
+  return (
+    <>
+      <h1>
+        React TypeScript Webpack Base App {process.env.NODE_ENV} -{' '}
+        {process.env.name}
+      </h1>
+      <p>{myVar}</p>
+      <img src={ReactPNG} alt="React icon png" width="100" height="100" />
+      <img src={ReactSVG} alt="React icon svg" width="100" height="100" />
+    </>
+  )
+```
+
+``` git save . ```
+``` git commit -m 'some other commit message' ```
+
+Lint-staged with pass now on the variable because it is being used and will use Prettier to format the myVar definition to:
+```
+ let myVar = 'Foobar'
+```
+
+Note: If you have installed the Prettier - Code formatter extension in VSCode and have configured it to format files on save, this is a non-issue. However, it will insure that a teammate who hasn't configured VSCode to format on save will have code formatted properly prior to committing.
