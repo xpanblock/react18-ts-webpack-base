@@ -573,3 +573,10 @@ Lint-staged with pass now on the variable because it is being used and will use 
 ```
 
 Note: If you have installed the Prettier - Code formatter extension in VSCode and have configured it to format files on save, this is a non-issue. However, it will insure that a teammate who hasn't configured VSCode to format on save will have code formatted properly prior to committing.
+
+## Part V: Set up page routing and code splitting
+
+So far, you have a simple application that displays a single page. Now, you will set it up to display navigation and multiple pages. In addition to that, you will set up code-splitting to lazy load components for individual pages as they are accessed by the end user, creating a more efficient application. Without code splitting, the end user would download the entire application and dependent libraries at one time, regardless of the need to access every page/component.
+
+1. Install react-router-dom:
+``` npm i react-router-dom@6 ```

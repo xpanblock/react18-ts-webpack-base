@@ -1,17 +1,32 @@
+import React from 'react'
+import { Routes, Route, Link } from 'react-router-dom'
 import './styles.css'
-import ReactPNG from './assets/react-js-icon.png'
-import ReactSVG from './assets/react-js-icon.svg'
+
+const Home = React.lazy(async () => await import('./pages/home'))
+const Dashboard = React.lazy(async () => await import('./pages/dashboard'))
+const Settings = React.lazy(async () => await import('./pages/settings'))
+
 export const App = (): JSX.Element => {
-  const myVar = 'Foobar'
   return (
     <>
-      <h1>
-        React TypeScript Webpack Base App {process.env.NODE_ENV} -{' '}
-        {process.env.name}
-      </h1>
-      <p>{myVar}</p>
-      <img src={ReactPNG} alt="React icon png" width="100" height="100" />
-      <img src={ReactSVG} alt="React icon svg" width="100" height="100" />
+      <ul>
+        <li>
+          <Link to="/">Home</Link>
+        </li>
+        <li>
+          <Link to="/dashboard">Dashboard</Link>
+        </li>
+        <li>
+          <Link to="/settings">Settings</Link>
+        </li>
+      </ul>
+      <React.Suspense fallback="Loading...">
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/settings" element={<Settings />} />
+        </Routes>
+      </React.Suspense>
     </>
   )
 }
